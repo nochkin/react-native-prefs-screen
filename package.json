@@ -29,5 +29,8 @@
   "homepage": "https://github.com/nochkin/react-native-prefs-screen#readme",
   "devDependencies": {
     "metro-react-native-babel-preset": "^0.56.0"
+  },
+  "dependencies": {
+    "@react-native-community/checkbox": "^0.2.0"
   }
 }
