@@ -1,0 +1,33 @@
+{
+  "name": "react-native-prefs-screen",
+  "version": "1.0.0",
+  "description": "React Native Preferences UI screen for iOS/Android",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nochkin/react-native-prefs-screen.git"
+  },
+  "keywords": [
+    "react-native",
+    "react-component",
+    "react-native-component",
+    "react native",
+    "mobile",
+    "ios",
+    "android",
+    "screen",
+    "ui"
+  ],
+  "author": "Nochkin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nochkin/react-native-prefs-screen/issues"
+  },
+  "homepage": "https://github.com/nochkin/react-native-prefs-screen#readme",
+  "devDependencies": {
+    "metro-react-native-babel-preset": "^0.56.0"
+  }
+}
