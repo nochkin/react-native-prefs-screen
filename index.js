@@ -1,4 +1,4 @@
-import Preferences from './src/Preferences';
+import Preferences, { PREF_TYPE } from './src/Preferences';
 
-export { Preferences };
+export { Preferences, PREF_TYPE };
 
