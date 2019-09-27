@@ -16,7 +16,6 @@ export const PREF_TYPE = {
     CHECKBOX: 2,
     PICKER: 3,
     LABEL: 4,
-    SWITCH: 5,
 };
 
 const styles = StyleSheet.create({
@@ -67,6 +66,8 @@ const styles = StyleSheet.create({
     },
 });
 
+const RealCheckBox = Platform.OS === 'ios' ? Switch : CheckBox;
+
 export default class Preferences extends React.Component {
     static propTypes = {
         getValue: PropTypes.func,
@@ -96,7 +97,7 @@ export default class Preferences extends React.Component {
             }
         });
 
-        this.state = {...newState};
+        this.state = {refresh: false, ...newState};
 
         this.sections = props.items;
 
@@ -106,16 +107,19 @@ export default class Preferences extends React.Component {
     onValueChange(item, value) {
         console.log('change', item, value);
         const stateKey = 'pref_' + item.name;
-        const newState = {[stateKey]: value};
-        this.setState(newState);
+        this.setState({
+            refresh: !this.state.refresh,
+            [stateKey]: value,
+        });
     }
 
     onMenuClick(menu) {
-        console.log('click', menu);
         const stateKey = 'pref_' + menu.name;
         switch(menu.type) {
             case PREF_TYPE.CHECKBOX:
-                this.setState({[stateKey]: true});
+            case PREF_TYPE.SWITCH:
+                this.setState({refresh: !this.state.refresh, [stateKey]: !this.state[stateKey]});
+                console.log('new state', this.state);
                 break;
             default:
                 break;
@@ -131,19 +135,16 @@ export default class Preferences extends React.Component {
     }
 
     renderItem({item}) {
-        //console.log('item', item);
         let valueField = null;
-        //let value = this.props.getValue ? this.props.getValue(item) : null;
         const value = this.state['pref_' + item.name];
 
         switch(item.type) {
             case PREF_TYPE.CHECKBOX:
-                //valueField = <CheckBox checked={!!value} onValueChange={(val) => this.onValueChange(item, val)}/>;
-                valueField = <Switch value={!!value} onValueChange={(val) => this.onValueChange(item, val)}/>;
+                valueField = <RealCheckBox value={!!value} onValueChange={(val) => this.onValueChange(item, val)}/>;
                 break;
-            case PREF_TYPE.SWITCH:
-                valueField = <Switch checked={!!value} onValueChange={(val) => this.onValueChange(item, val)}/>;
-                break;
+            //case PREF_TYPE.SWITCH:
+            //    valueField = <Switch value={!!value} onValueChange={(val) => this.onValueChange(item, val)}/>;
+            //    break;
             case PREF_TYPE.LABEL:
                 valueField = <Text style={styles.menuItemValueText}>{value}</Text>;
                 break;
@@ -183,6 +184,7 @@ export default class Preferences extends React.Component {
                 renderSectionHeader={this.renderSectionHeader}
                 renderItem={this.renderItem}
                 sections={this.sections}
+                extraData={this.state.refresh}
             />
         )
     }
