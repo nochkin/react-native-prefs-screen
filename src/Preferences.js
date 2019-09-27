@@ -88,20 +88,32 @@ export default class Preferences extends React.Component {
     constructor(props) {
         super(props);
 
-        let newState = {};
-        props.items.forEach((section) => {
-            if (section && Array.isArray(section.data)) {
-                section.data.forEach((elem) => {
-                    newState['pref_' + elem.name] = props.getValue ? props.getValue(elem) : null;
-                })
-            }
-        });
-
+        let newState = this._queryValues();
         this.state = {refresh: false, ...newState};
 
         this.sections = props.items;
 
         this.renderItem = this.renderItem.bind(this);
+    }
+
+    queryValues() {
+        this.setState(this._queryValues());
+    }
+
+    _queryValues() {
+        let newState = {};
+        this.props.items && this.props.items.forEach((section) => {
+            if (section && Array.isArray(section.data)) {
+                section.data.forEach((elem) => {
+                    const stateKey = 'pref_' + elem.name;
+                    newState[stateKey] = this.props.getValue ? this.props.getValue(elem) : null;
+                    if (elem.type === PREF_TYPE.CHECKBOX) {
+                        newState[stateKey] = !!parseInt(newState[stateKey]);
+                    }
+                })
+            }
+        });
+        return newState;
     }
 
     onValueChange(item, value) {
@@ -111,15 +123,18 @@ export default class Preferences extends React.Component {
             refresh: !this.state.refresh,
             [stateKey]: value,
         });
+
+        if (this.props.onChange) {
+            this.props.onChange(item, value);
+        }
     }
 
     onMenuClick(menu) {
         const stateKey = 'pref_' + menu.name;
+        if (!!menu.disabled) return;
         switch(menu.type) {
             case PREF_TYPE.CHECKBOX:
-            case PREF_TYPE.SWITCH:
-                this.setState({refresh: !this.state.refresh, [stateKey]: !this.state[stateKey]});
-                console.log('new state', this.state);
+                this.onValueChange(menu, !this.state[stateKey]);
                 break;
             default:
                 break;
@@ -140,12 +155,14 @@ export default class Preferences extends React.Component {
 
         switch(item.type) {
             case PREF_TYPE.CHECKBOX:
-                valueField = <RealCheckBox value={!!value} onValueChange={(val) => this.onValueChange(item, val)}/>;
+                valueField = <RealCheckBox
+                    disabled={!!item.disabled}
+                    value={!!value}
+                    onValueChange={(val) => this.onValueChange(item, val)}
+                    />;
                 break;
-            //case PREF_TYPE.SWITCH:
-            //    valueField = <Switch value={!!value} onValueChange={(val) => this.onValueChange(item, val)}/>;
-            //    break;
             case PREF_TYPE.LABEL:
+            case PREF_TYPE.PICKER:
                 valueField = <Text style={styles.menuItemValueText}>{value}</Text>;
                 break;
             default:
