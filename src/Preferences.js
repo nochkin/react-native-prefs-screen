@@ -137,8 +137,10 @@ export default class Preferences extends React.Component {
                 this.onValueChange(menu, !this.state[stateKey]);
                 break;
             case PREF_TYPE.TEXTINPUT:
-                DialogAndroid.prompt(menu.text, menu.subtext)
-                    .then((action, text) => {
+                const dialogOptions = {defaultValue: this.state[stateKey]};
+                menu.keyboardType && (dialogOptions.keyboardType = menu.keyboardType);
+                DialogAndroid.prompt(menu.text, menu.subtext, dialogOptions)
+                    .then(({action, text}) => {
                         if (action === DialogAndroid.actionPositive) {
                             this.onValueChange(menu, text);
                         }
@@ -171,6 +173,7 @@ export default class Preferences extends React.Component {
                 break;
             case PREF_TYPE.LABEL:
             case PREF_TYPE.PICKER:
+            case PREF_TYPE.TEXTINPUT:
                 valueField = <Text style={styles.menuItemValueText}>{value}</Text>;
                 break;
             default:
