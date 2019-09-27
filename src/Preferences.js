@@ -9,6 +9,7 @@ import {
     Switch
 } from 'react-native';
 import CheckBox from '@react-native-community/checkbox';
+import DialogAndroid from 'react-native-dialogs';
 import PropTypes from 'prop-types';
 
 export const PREF_TYPE = {
@@ -134,6 +135,14 @@ export default class Preferences extends React.Component {
         switch(menu.type) {
             case PREF_TYPE.CHECKBOX:
                 this.onValueChange(menu, !this.state[stateKey]);
+                break;
+            case PREF_TYPE.TEXTINPUT:
+                DialogAndroid.prompt(menu.text, menu.subtext)
+                    .then((action, text) => {
+                        if (action === DialogAndroid.actionPositive) {
+                            this.onValueChange(menu, text);
+                        }
+                    });
                 break;
             default:
                 break;

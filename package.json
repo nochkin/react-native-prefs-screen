@@ -30,7 +30,13 @@
   "devDependencies": {
     "metro-react-native-babel-preset": "^0.56.0"
   },
+  "peerDependencies": {
+    "prop-types": ">=15.5.0",
+    "react": ">=16.0.0",
+    "react-native": ">=0.56.0"
+  },
   "dependencies": {
-    "@react-native-community/checkbox": "^0.2.0"
+    "@react-native-community/checkbox": "^0.2.0",
+    "react-native-dialogs": "^1.0.5"
   }
 }
