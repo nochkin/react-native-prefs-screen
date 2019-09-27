@@ -118,7 +118,7 @@ export default class Preferences extends React.Component {
     }
 
     onValueChange(item, value) {
-        console.log('change', item, value);
+        // console.log('change', item, value);
         const stateKey = 'pref_' + item.name;
         this.setState({
             refresh: !this.state.refresh,
@@ -145,6 +145,19 @@ export default class Preferences extends React.Component {
                             this.onValueChange(menu, text);
                         }
                     });
+                break;
+            case PREF_TYPE.PICKER:
+                const items = menu.pickerValues ? menu.pickerValues.map(elem => ({label: elem, id: elem})) : [];
+                DialogAndroid.showPicker(menu.text, menu.subtext, {
+                    positiveText: null,
+                    type: DialogAndroid.listRadio,
+                    selectedId: this.state[stateKey],
+                    items: items,
+                }).then(({selectedItem}) => {
+                    if (selectedItem) {
+                        this.onValueChange(menu, selectedItem.label);
+                    }
+                });
                 break;
             default:
                 break;
