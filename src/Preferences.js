@@ -131,7 +131,6 @@ export default class Preferences extends React.Component {
 
     onMenuClick(menu) {
         const stateKey = 'pref_' + menu.name;
-        if (!!menu.disabled) return;
         switch(menu.type) {
             case PREF_TYPE.CHECKBOX:
                 this.onValueChange(menu, !this.state[stateKey]);
@@ -169,9 +168,11 @@ export default class Preferences extends React.Component {
                 break;
         }
 
+        const onPress = (!!item.disabled || (item.type === PREF_TYPE.LABEL)) ? null : () => this.onMenuClick(item);
+        const activeOpacity = onPress === null ? 1.0 : 0.2;
+
         return (
-            <TouchableOpacity
-                onPress={() => this.onMenuClick(item)}>
+            <TouchableOpacity onPress={onPress} activeOpacity={activeOpacity}>
                 <View style={styles.menuItem} key={item.index}>
                     <View style={styles.menuItemField}>
                         <Text style={styles.menuItemText}>{item.text}</Text>
