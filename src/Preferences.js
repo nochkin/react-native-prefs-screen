@@ -65,6 +65,7 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
     },
     menuItemValueSwitch: {
+        backgroundColor: '#e0e0e0',
     },
 });
 
@@ -182,6 +183,7 @@ export default class Preferences extends React.Component {
             case PREF_TYPE.SWITCH:
                 valueField = <Switch
                     style={[styles.menuItemValueSwitch, this.styles.menuItemValueSwitch]}
+                    trackColor={{false: this.styles.menuItemValueSwitch.tintColor || this.styles.menuItemValueSwitch.tintColor}}
                     disabled={!!item.disabled}
                     value={!!value}
                     onValueChange={(val) => this.onValueChange(item, val)}
