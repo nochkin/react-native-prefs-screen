@@ -1,6 +1,6 @@
 {
   "name": "react-native-prefs-screen",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "React Native Preferences UI screen for iOS/Android",
   "main": "index.js",
   "scripts": {
