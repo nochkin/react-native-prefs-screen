@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
     },
     menuItemValueSwitch: {
-        backgroundColor: '#e0e0e0',
+        tintColor: '#e0e0e0',
     },
 });
 
