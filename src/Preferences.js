@@ -8,13 +8,12 @@ import {
     Platform,
     Switch
 } from 'react-native';
-import CheckBox from '@react-native-community/checkbox';
 import DialogAndroid from 'react-native-dialogs';
 import PropTypes from 'prop-types';
 
 export const PREF_TYPE = {
     TEXTINPUT: 1,
-    CHECKBOX: 2,
+    SWITCH: 2,
     PICKER: 3,
     LABEL: 4,
 };
@@ -65,9 +64,9 @@ const styles = StyleSheet.create({
         color: '#333',
         alignSelf: 'center',
     },
+    menuItemValueSwitch: {
+    },
 });
-
-const RealCheckBox = Platform.OS === 'ios' ? Switch : CheckBox;
 
 export default class Preferences extends React.Component {
     static propTypes = {
@@ -92,8 +91,11 @@ export default class Preferences extends React.Component {
         let newState = this._queryValues();
         this.state = {refresh: false, ...newState};
 
+        this.styles = StyleSheet.create(props.styles || {});
+
         this.sections = props.items;
 
+        this.renderSectionHeader = this.renderSectionHeader.bind(this);
         this.renderItem = this.renderItem.bind(this);
     }
 
@@ -108,7 +110,7 @@ export default class Preferences extends React.Component {
                 section.data.forEach((elem) => {
                     const stateKey = 'pref_' + elem.name;
                     newState[stateKey] = this.props.getValue ? this.props.getValue(elem) : null;
-                    if (elem.type === PREF_TYPE.CHECKBOX) {
+                    if (elem.type === PREF_TYPE.SWITCH) {
                         newState[stateKey] = !!parseInt(newState[stateKey]);
                     }
                 })
@@ -133,7 +135,7 @@ export default class Preferences extends React.Component {
     onMenuClick(menu) {
         const stateKey = 'pref_' + menu.name;
         switch(menu.type) {
-            case PREF_TYPE.CHECKBOX:
+            case PREF_TYPE.SWITCH:
                 this.onValueChange(menu, !this.state[stateKey]);
                 break;
             case PREF_TYPE.TEXTINPUT:
@@ -166,7 +168,7 @@ export default class Preferences extends React.Component {
 
     renderSectionHeader({section}) {
         return (
-            <Text style={styles.sectionHeader}>
+            <Text style={[styles.sectionHeader, this.styles.sectionHeader]}>
                 {section.title}
             </Text>
         )
@@ -177,8 +179,9 @@ export default class Preferences extends React.Component {
         const value = this.state['pref_' + item.name];
 
         switch(item.type) {
-            case PREF_TYPE.CHECKBOX:
-                valueField = <RealCheckBox
+            case PREF_TYPE.SWITCH:
+                valueField = <Switch
+                    style={[styles.menuItemValueSwitch, this.styles.menuItemValueSwitch]}
                     disabled={!!item.disabled}
                     value={!!value}
                     onValueChange={(val) => this.onValueChange(item, val)}
@@ -187,27 +190,27 @@ export default class Preferences extends React.Component {
             case PREF_TYPE.LABEL:
             case PREF_TYPE.PICKER:
             case PREF_TYPE.TEXTINPUT:
-                valueField = <Text style={styles.menuItemValueText}>{value}</Text>;
+                valueField = <Text style={[styles.menuItemValueText, this.styles.menuItemValueText]}>{value}</Text>;
                 break;
             default:
                 break;
         }
 
         const onPress = (!!item.disabled || (item.type === PREF_TYPE.LABEL)) ? null : () => this.onMenuClick(item);
-        const activeOpacity = onPress === null ? 1.0 : 0.2;
+        const activeOpacity = ((onPress === null) || (item.type === PREF_TYPE.SWITCH)) ? 1.0 : 0.5;
 
         return (
             <TouchableOpacity onPress={onPress} activeOpacity={activeOpacity}>
-                <View style={styles.menuItem} key={item.index}>
-                    <View style={styles.menuItemField}>
-                        <Text style={styles.menuItemText}>{item.text}</Text>
+                <View style={[styles.menuItem, this.styles.menuItem]} key={item.index}>
+                    <View style={[styles.menuItemField, this.styles.menuItemField]}>
+                        <Text style={[styles.menuItemText, this.styles.menuItemText]}>{item.text}</Text>
                         {item.subtext ?
-                            <Text style={styles.menuItemSubText}>{item.subtext}</Text>
+                            <Text style={[styles.menuItemSubText, this.styles.menuItemSubText]}>{item.subtext}</Text>
                             :
                             null
                         }
                     </View>
-                    <View style={styles.menuItemValue}>
+                    <View style={[styles.menuItemValue, this.styles.menuItemValue]}>
                         {valueField}
                     </View>
                 </View>
