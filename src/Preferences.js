@@ -101,7 +101,10 @@ export default class Preferences extends React.Component {
     }
 
     queryValues() {
-        this.setState(this._queryValues());
+        this.setState({
+            refresh: !this.state.refresh,
+            ...this._queryValues()
+        });
     }
 
     _queryValues() {
