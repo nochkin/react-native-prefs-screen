@@ -73,6 +73,7 @@ export default class Preferences extends React.Component {
     static propTypes = {
         getValue: PropTypes.func,
         onChange: PropTypes.func,
+        onPress: PropTypes.func,
         refreshControl: PropTypes.object,
         items: PropTypes.array,
         containerStyle: PropTypes.object,
@@ -81,6 +82,7 @@ export default class Preferences extends React.Component {
     static defaultProps = {
         getValue: null,
         onChange: null,
+        onPress: null,
         refreshControl: null,
         items: [],
         containerStyle: {},
@@ -96,6 +98,7 @@ export default class Preferences extends React.Component {
 
         this.sections = props.items;
 
+        this.onMenuClick = this.onMenuClick.bind(this);
         this.renderSectionHeader = this.renderSectionHeader.bind(this);
         this.renderItem = this.renderItem.bind(this);
     }
@@ -137,6 +140,10 @@ export default class Preferences extends React.Component {
     }
 
     onMenuClick(menu) {
+        if (this.props.onPress) {
+            if (this.props.onPress(menu.name) === false) return false;
+        }
+
         const stateKey = 'pref_' + menu.name;
         switch(menu.type) {
             case PREF_TYPE.SWITCH:
@@ -164,6 +171,8 @@ export default class Preferences extends React.Component {
                         this.onValueChange(menu, selectedItem.label);
                     }
                 });
+                break;
+            case PREF_TYPE.LABEL:
                 break;
             default:
                 break;
@@ -201,11 +210,10 @@ export default class Preferences extends React.Component {
                 break;
         }
 
-        const onPress = (!!item.disabled || (item.type === PREF_TYPE.LABEL)) ? null : () => this.onMenuClick(item);
-        const activeOpacity = ((onPress === null) || (item.type === PREF_TYPE.SWITCH)) ? 1.0 : 0.5;
+        const activeOpacity = (!!item.disabled || (item.type === PREF_TYPE.SWITCH)) ? 1.0 : 0.5;
 
         return (
-            <TouchableOpacity onPress={onPress} activeOpacity={activeOpacity}>
+            <TouchableOpacity onPress={() => this.onMenuClick(item)} activeOpacity={activeOpacity}>
                 <View style={[styles.menuItem, this.styles.menuItem]} key={item.index}>
                     <View style={[styles.menuItemField, this.styles.menuItemField]}>
                         <Text style={[styles.menuItemText, this.styles.menuItemText]}>{item.text}</Text>
