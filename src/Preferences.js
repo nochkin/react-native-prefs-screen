@@ -98,6 +98,8 @@ export default class Preferences extends React.Component {
 
         this.sections = props.items;
 
+        this._pickers = {};
+
         this.onMenuClick = this.onMenuClick.bind(this);
         this.renderSectionHeader = this.renderSectionHeader.bind(this);
         this.renderItem = this.renderItem.bind(this);
@@ -160,7 +162,10 @@ export default class Preferences extends React.Component {
                     });
                 break;
             case PREF_TYPE.PICKER:
-                const items = menu.pickerValues ? menu.pickerValues.map(elem => ({label: elem, id: elem})) : [];
+                let items = this._pickers[menu.name] ?
+                    Object.entries(this._pickers[menu.name]).map(([k,v]) => ({label: v, id: k}))
+                    :
+                    menu.pickerValues ? menu.pickerValues.map(elem => ({label: elem, id: elem})) : [];
                 DialogAndroid.showPicker(menu.text, menu.subtext, {
                     positiveText: null,
                     type: DialogAndroid.listRadio,
@@ -168,7 +173,7 @@ export default class Preferences extends React.Component {
                     items: items,
                 }).then(({selectedItem}) => {
                     if (selectedItem) {
-                        this.onValueChange(menu, selectedItem.label);
+                        this.onValueChange(menu, selectedItem.id);
                     }
                 });
                 break;
@@ -189,7 +194,7 @@ export default class Preferences extends React.Component {
 
     renderItem({item}) {
         let valueField = null;
-        const value = this.state['pref_' + item.name];
+        let value = this.state['pref_' + item.name];
 
         switch(item.type) {
             case PREF_TYPE.SWITCH:
@@ -204,6 +209,12 @@ export default class Preferences extends React.Component {
             case PREF_TYPE.LABEL:
             case PREF_TYPE.PICKER:
             case PREF_TYPE.TEXTINPUT:
+                if (item.type === PREF_TYPE.PICKER) {
+                    if (item.pickerValues && !Array.isArray(item.pickerValues)) {
+                        this._pickers[item.name] = item.pickerValues;
+                        value = this._pickers[item.name][value];
+                    }
+                }
                 valueField = <Text style={[styles.menuItemValueText, this.styles.menuItemValueText]}>{value}</Text>;
                 break;
             default:
