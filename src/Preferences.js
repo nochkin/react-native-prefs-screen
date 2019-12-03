@@ -166,6 +166,9 @@ export default class Preferences extends React.Component {
                     Object.entries(this._pickers[menu.name]).map(([k,v]) => ({label: v, id: k}))
                     :
                     menu.pickerValues ? menu.pickerValues.map(elem => ({label: elem, id: elem})) : [];
+                if (typeof(menu.pickerValuesSort) === 'function') {
+                    items.sort(menu.pickerValuesSort);
+                }
                 DialogAndroid.showPicker(menu.text, menu.subtext, {
                     positiveText: null,
                     type: DialogAndroid.listRadio,
