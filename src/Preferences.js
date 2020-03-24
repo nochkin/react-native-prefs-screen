@@ -198,6 +198,7 @@ export default class Preferences extends React.Component {
     renderItem({item}) {
         let valueField = null;
         let value = this.state['pref_' + item.name];
+	let testID = item.testID || 'prefs_item_' + item.id;
 
         switch(item.type) {
             case PREF_TYPE.SWITCH:
@@ -227,7 +228,7 @@ export default class Preferences extends React.Component {
         const activeOpacity = (!!item.disabled || (item.type === PREF_TYPE.SWITCH)) ? 1.0 : 0.5;
 
         return (
-            <TouchableOpacity onPress={() => this.onMenuClick(item)} activeOpacity={activeOpacity}>
+            <TouchableOpacity onPress={() => this.onMenuClick(item)} activeOpacity={activeOpacity} testID={testID}>
                 <View style={[styles.menuItem, this.styles.menuItem]} key={item.index}>
                     <View style={[styles.menuItemField, this.styles.menuItemField]}>
                         <Text style={[styles.menuItemText, this.styles.menuItemText]}>{item.text}</Text>
