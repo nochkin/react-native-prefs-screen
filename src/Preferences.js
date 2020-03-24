@@ -77,6 +77,7 @@ export default class Preferences extends React.Component {
         refreshControl: PropTypes.object,
         items: PropTypes.array,
         containerStyle: PropTypes.object,
+        testID: PropTypes.object,
     };
 
     static defaultProps = {
@@ -86,6 +87,7 @@ export default class Preferences extends React.Component {
         refreshControl: null,
         items: [],
         containerStyle: {},
+        testID: null,
     };
 
     constructor(props) {
@@ -248,7 +250,7 @@ export default class Preferences extends React.Component {
 
     render() {
         const {
-            containerStyle, refreshControl
+            containerStyle, refreshControl, testID
         } = this.props;
 
         return (
@@ -259,6 +261,7 @@ export default class Preferences extends React.Component {
                 renderItem={this.renderItem}
                 sections={this.sections}
                 extraData={this.state.refresh}
+                testID={testID}
             />
         )
     }
