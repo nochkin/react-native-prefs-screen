@@ -77,7 +77,7 @@ export default class Preferences extends React.Component {
         refreshControl: PropTypes.object,
         items: PropTypes.array,
         containerStyle: PropTypes.object,
-        testID: PropTypes.object,
+        testID: PropTypes.string,
     };
 
     static defaultProps = {
