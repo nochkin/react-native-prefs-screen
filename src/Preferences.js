@@ -6,7 +6,9 @@ import {
     TouchableOpacity,
     StyleSheet,
     Platform,
-    Switch
+    Switch,
+    Alert,
+    ActionSheetIOS
 } from 'react-native';
 import DialogAndroid from 'react-native-dialogs';
 import PropTypes from 'prop-types';
@@ -130,6 +132,49 @@ export default class Preferences extends React.Component {
         return newState;
     }
 
+    openPrompt(menu, dialogOptions) {
+        if (Platform.OS === 'ios') {
+            Alert.prompt(menu.text, menu.subtext, [
+                    {style: 'default', onPress: (text) => this.onValueChange(menu, text)},
+                ],
+                'plain-text',
+                dialogOptions.defaultValue,
+                dialogOptions.keyboardType || 'default'
+            );
+        } else if (Platform.OS === 'android') {
+            DialogAndroid.prompt(menu.text, menu.subtext, dialogOptions)
+                .then(({action, text}) => {
+                    if (action === DialogAndroid.actionPositive) {
+                        this.onValueChange(menu, text);
+                    }
+                });
+        }
+    }
+
+    openPicker(menu, dialogOptions) {
+        if (Platform.OS === 'ios') {
+            const itemLabels = dialogOptions.items.map(elem => elem.label);
+            itemLabels.push('Cancel');
+            ActionSheetIOS.showActionSheetWithOptions({
+                    options: itemLabels,
+                    cancelButtonIndex: itemLabels.length - 1
+                },
+                itemIdx => {
+                    if (itemIdx < itemLabels.length) {
+                        const selectedItem = dialogOptions.items[itemIdx];
+                        this.onValueChange(menu, selectedItem.id);
+                    }
+                });
+        } else if (Platform.OS === 'android') {
+            DialogAndroid.showPicker(menu.text, menu.subtext, dialogOptions)
+                .then(({selectedItem}) => {
+                    if (selectedItem) {
+                        this.onValueChange(menu, selectedItem.id);
+                    }
+                });
+        }
+    }
+
     onValueChange(item, value) {
         // console.log('change', item, value);
         const stateKey = 'pref_' + item.name;
@@ -156,12 +201,7 @@ export default class Preferences extends React.Component {
             case PREF_TYPE.TEXTINPUT:
                 const dialogOptions = {defaultValue: this.state[stateKey]};
                 menu.keyboardType && (dialogOptions.keyboardType = menu.keyboardType);
-                DialogAndroid.prompt(menu.text, menu.subtext, dialogOptions)
-                    .then(({action, text}) => {
-                        if (action === DialogAndroid.actionPositive) {
-                            this.onValueChange(menu, text);
-                        }
-                    });
+                this.openPrompt(menu, dialogOptions);
                 break;
             case PREF_TYPE.PICKER:
                 let items = this._pickers[menu.name] ?
@@ -171,16 +211,12 @@ export default class Preferences extends React.Component {
                 if (typeof(menu.pickerValuesSort) === 'function') {
                     items.sort(menu.pickerValuesSort);
                 }
-                DialogAndroid.showPicker(menu.text, menu.subtext, {
+                this.openPicker(menu, {
                     positiveText: null,
                     type: DialogAndroid.listRadio,
                     selectedId: this.state[stateKey],
-                    items: items,
-                }).then(({selectedItem}) => {
-                    if (selectedItem) {
-                        this.onValueChange(menu, selectedItem.id);
-                    }
-                });
+                    items: items
+                    });
                 break;
             case PREF_TYPE.LABEL:
                 break;
