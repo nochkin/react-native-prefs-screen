@@ -160,7 +160,7 @@ export default class Preferences extends React.Component {
                     cancelButtonIndex: itemLabels.length - 1
                 },
                 itemIdx => {
-                    if (itemIdx < itemLabels.length) {
+                    if (itemIdx < (itemLabels.length - 1)) {
                         const selectedItem = dialogOptions.items[itemIdx];
                         this.onValueChange(menu, selectedItem.id);
                     }
