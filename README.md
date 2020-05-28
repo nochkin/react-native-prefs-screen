@@ -1,13 +1,5 @@
 # react-native-prefs-screen
 
-***
-**This component is in early development stage**
-
-**Use it at your risk or wait until it's completed**
-
-**iOS and Android supported**
-***
-
 ## Purpose
 The react-native-prefs-screen component is for generating "Settings" screen using React Native.
 It takes a specially structured configuration object describing sections and setting options.
