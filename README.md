@@ -5,7 +5,7 @@
 
 **Use it at your risk or wait until it's completed**
 
-**Currently, it works for Android only. iOS support is expected to be added soon**
+**iOS and Android supported**
 ***
 
 ## Purpose
@@ -15,7 +15,7 @@ The component takes the object and renders the Settings screen accordingly.
 
 ## Supported platforms
 * Android
-* iOS (not ready yet)
+* iOS
 
 ## Installation
 `npm install react-native-prefs-screen react-native-dialogs`
