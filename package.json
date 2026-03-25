@@ -36,6 +36,6 @@
     "react-native": ">=0.56.0"
   },
   "dependencies": {
-    "react-native-dialogs": "^1.0.5"
+    "react-native-dialog": "^9.3.0"
   }
 }
