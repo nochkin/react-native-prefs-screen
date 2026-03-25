@@ -37,5 +37,9 @@
   },
   "dependencies": {
     "react-native-dialog": "^9.3.0"
+  },
+  "publishConfig": {
+    "provenance": true,
+    "access": "public"
   }
 }
