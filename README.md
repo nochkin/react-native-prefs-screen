@@ -44,7 +44,7 @@ export default function PreferencesScreen() {
 
 	const values = {
 		wifi_only: 1,
-		username: 'alex',
+		username: 'alice',
 		quality: 'medium',
 		version: '1.5.0'
 	};
