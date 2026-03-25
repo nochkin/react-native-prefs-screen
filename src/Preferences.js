@@ -8,9 +8,10 @@ import {
     Platform,
     Switch,
     Alert,
-    ActionSheetIOS
+    ActionSheetIOS,
+    ScrollView
 } from 'react-native';
-import DialogAndroid from 'react-native-dialogs';
+import Dialog from 'react-native-dialog';
 import PropTypes from 'prop-types';
 
 export const PREF_TYPE = {
@@ -96,7 +97,17 @@ export default class Preferences extends React.Component {
         super(props);
 
         let newState = this._queryValues();
-        this.state = {refresh: false, ...newState};
+        this.state = {
+            refresh: false,
+            ...newState,
+            // Dialog state for react-native-dialog
+            promptDialogVisible: false,
+            pickerDialogVisible: false,
+            currentPromptMenu: null,
+            currentPromptOptions: null,
+            currentPickerMenu: null,
+            currentPickerOptions: null,
+        };
 
         this.styles = StyleSheet.create(props.styles || {});
 
@@ -107,6 +118,11 @@ export default class Preferences extends React.Component {
         this.onMenuClick = this.onMenuClick.bind(this);
         this.renderSectionHeader = this.renderSectionHeader.bind(this);
         this.renderItem = this.renderItem.bind(this);
+        this.handlePromptConfirm = this.handlePromptConfirm.bind(this);
+        this.handlePromptCancel = this.handlePromptCancel.bind(this);
+        this.handlePromptInputChange = this.handlePromptInputChange.bind(this);
+        this.handlePickerSelect = this.handlePickerSelect.bind(this);
+        this.handlePickerCancel = this.handlePickerCancel.bind(this);
     }
 
     queryValues() {
@@ -135,19 +151,19 @@ export default class Preferences extends React.Component {
     openPrompt(menu, dialogOptions) {
         if (Platform.OS === 'ios') {
             Alert.prompt(menu.text, menu.subtext, [
-                    {style: 'default', onPress: (text) => this.onValueChange(menu, text)},
-                ],
+                { style: 'default', onPress: (text) => this.onValueChange(menu, text) },
+            ],
                 'plain-text',
                 dialogOptions.defaultValue,
                 dialogOptions.keyboardType || 'default'
             );
         } else if (Platform.OS === 'android') {
-            DialogAndroid.prompt(menu.text, menu.subtext, dialogOptions)
-                .then(({action, text}) => {
-                    if (action === DialogAndroid.actionPositive) {
-                        this.onValueChange(menu, text);
-                    }
-                });
+            // Store menu and options in state for the dialog to access
+            this.setState({
+                currentPromptMenu: menu,
+                currentPromptOptions: dialogOptions,
+                promptDialogVisible: true
+            });
         }
     }
 
@@ -156,9 +172,9 @@ export default class Preferences extends React.Component {
             const itemLabels = dialogOptions.items.map(elem => elem.label);
             itemLabels.push('Cancel');
             ActionSheetIOS.showActionSheetWithOptions({
-                    options: itemLabels,
-                    cancelButtonIndex: itemLabels.length - 1
-                },
+                options: itemLabels,
+                cancelButtonIndex: itemLabels.length - 1
+            },
                 itemIdx => {
                     if (itemIdx < (itemLabels.length - 1)) {
                         const selectedItem = dialogOptions.items[itemIdx];
@@ -166,12 +182,12 @@ export default class Preferences extends React.Component {
                     }
                 });
         } else if (Platform.OS === 'android') {
-            DialogAndroid.showPicker(menu.text, menu.subtext, dialogOptions)
-                .then(({selectedItem}) => {
-                    if (selectedItem) {
-                        this.onValueChange(menu, selectedItem.id);
-                    }
-                });
+            // Store menu and options in state for the dialog to access
+            this.setState({
+                currentPickerMenu: menu,
+                currentPickerOptions: dialogOptions,
+                pickerDialogVisible: true
+            });
         }
     }
 
@@ -188,35 +204,65 @@ export default class Preferences extends React.Component {
         }
     }
 
+    handlePromptConfirm() {
+        const { currentPromptMenu } = this.state;
+        if (currentPromptMenu && this.promptInputValue) {
+            this.onValueChange(currentPromptMenu, this.promptInputValue);
+            this.promptInputValue = null;
+            this.setState({ promptDialogVisible: false, currentPromptMenu: null, currentPromptOptions: null });
+        }
+    }
+
+    handlePromptCancel() {
+        this.promptInputValue = null;
+        this.setState({ promptDialogVisible: false, currentPromptMenu: null, currentPromptOptions: null });
+    }
+
+    handlePickerSelect(item) {
+        const { currentPickerMenu } = this.state;
+        if (currentPickerMenu) {
+            this.onValueChange(currentPickerMenu, item.id);
+            this.setState({ pickerDialogVisible: false, currentPickerMenu: null, currentPickerOptions: null });
+        }
+    }
+
+    handlePickerCancel() {
+        this.setState({ pickerDialogVisible: false, currentPickerMenu: null, currentPickerOptions: null });
+    }
+
+    handlePromptInputChange(text) {
+        this.promptInputValue = text;
+    }
+
     onMenuClick(menu) {
         if (this.props.onPress) {
             if (this.props.onPress(menu.name) === false) return false;
         }
 
         const stateKey = 'pref_' + menu.name;
-        switch(menu.type) {
+        switch (menu.type) {
             case PREF_TYPE.SWITCH:
                 this.onValueChange(menu, !this.state[stateKey]);
                 break;
             case PREF_TYPE.TEXTINPUT:
-                const dialogOptions = {defaultValue: this.state[stateKey]};
+                const dialogOptions = { defaultValue: this.state[stateKey] };
                 menu.keyboardType && (dialogOptions.keyboardType = menu.keyboardType);
                 this.openPrompt(menu, dialogOptions);
                 break;
             case PREF_TYPE.PICKER:
                 let items = this._pickers[menu.name] ?
-                    Object.entries(this._pickers[menu.name]).map(([k,v]) => ({label: v, id: k}))
+                    Object.entries(this._pickers[menu.name]).map(([k, v]) => ({ label: v, id: k }))
                     :
-                    menu.pickerValues ? menu.pickerValues.map(elem => ({label: elem, id: elem})) : [];
-                if (typeof(menu.pickerValuesSort) === 'function') {
+                    menu.pickerValues ? menu.pickerValues.map(elem => ({ label: elem, id: elem })) : [];
+                if (typeof (menu.pickerValuesSort) === 'function') {
                     items.sort(menu.pickerValuesSort);
                 }
                 this.openPicker(menu, {
                     positiveText: null,
-                    type: DialogAndroid.listRadio,
+                    type: 'listRadio',
                     selectedId: this.state[stateKey],
                     items: items
-                    });
+                });
                 break;
             case PREF_TYPE.LABEL:
                 break;
@@ -225,7 +271,7 @@ export default class Preferences extends React.Component {
         }
     }
 
-    renderSectionHeader({section}) {
+    renderSectionHeader({ section }) {
         return (
             <Text style={[styles.sectionHeader, this.styles.sectionHeader]}>
                 {section.title}
@@ -233,20 +279,20 @@ export default class Preferences extends React.Component {
         )
     }
 
-    renderItem({item}) {
+    renderItem({ item }) {
         let valueField = null;
         let value = this.state['pref_' + item.name];
-	let testID = item.testID || 'prefs_item_' + item.id;
+        let testID = item.testID || 'prefs_item_' + item.id;
 
-        switch(item.type) {
+        switch (item.type) {
             case PREF_TYPE.SWITCH:
                 valueField = <Switch
                     style={[styles.menuItemValueSwitch, this.styles.menuItemValueSwitch]}
-                    trackColor={{false: this.styles.menuItemValueSwitch.tintColor || this.styles.menuItemValueSwitch.tintColor}}
+                    trackColor={{ false: this.styles.menuItemValueSwitch.tintColor || this.styles.menuItemValueSwitch.tintColor }}
                     disabled={!!item.disabled}
                     value={!!value}
                     onValueChange={(val) => this.onValueChange(item, val)}
-                    />;
+                />;
                 break;
             case PREF_TYPE.LABEL:
             case PREF_TYPE.PICKER:
@@ -289,16 +335,84 @@ export default class Preferences extends React.Component {
             containerStyle, refreshControl, testID
         } = this.props;
 
+        const { currentPromptMenu, currentPromptOptions, currentPickerMenu, currentPickerOptions } = this.state;
+
         return (
-            <SectionList
-                style={containerStyle}
-                refreshControl={refreshControl}
-                renderSectionHeader={this.renderSectionHeader}
-                renderItem={this.renderItem}
-                sections={this.sections}
-                extraData={this.state.refresh}
-                testID={testID}
-            />
+            <View style={{ flex: 1 }}>
+                <SectionList
+                    style={containerStyle}
+                    refreshControl={refreshControl}
+                    renderSectionHeader={this.renderSectionHeader}
+                    renderItem={this.renderItem}
+                    sections={this.sections}
+                    extraData={this.state.refresh}
+                    testID={testID}
+                />
+
+                {/* Prompt Dialog for Android */}
+                {Platform.OS === 'android' && currentPromptMenu && (
+                    <Dialog.Container
+                        visible={this.state.promptDialogVisible}
+                        onBackdropPress={this.handlePromptCancel}
+                        onRequestClose={this.handlePromptCancel}
+                    >
+                        <Dialog.Title>{currentPromptMenu.text}</Dialog.Title>
+                        {currentPromptMenu.subtext && (
+                            <Dialog.Description>
+                                {currentPromptMenu.subtext}
+                            </Dialog.Description>
+                        )}
+                        <Dialog.Input
+                            label={currentPromptOptions.label || 'Value'}
+                            value={this.promptInputValue || currentPromptOptions.defaultValue || ''}
+                            onChangeText={this.handlePromptInputChange}
+                            keyboardType={currentPromptOptions.keyboardType || 'default'}
+                            placeholder="Enter value"
+                        />
+                        <Dialog.Button label="Cancel" onPress={this.handlePromptCancel} />
+                        <Dialog.Button label="OK" onPress={this.handlePromptConfirm} />
+                    </Dialog.Container>
+                )}
+
+                {/* Picker Dialog for Android */}
+                {Platform.OS === 'android' && currentPickerMenu && currentPickerOptions && (
+                    <Dialog.Container
+                        visible={this.state.pickerDialogVisible}
+                        onBackdropPress={this.handlePickerCancel}
+                        onRequestClose={this.handlePickerCancel}
+                        verticalButtons={true}
+                    >
+                        <Dialog.Title>{currentPickerMenu.text}</Dialog.Title>
+                        {currentPickerMenu.subtext && (
+                            <Dialog.Description>
+                                {currentPickerMenu.subtext}
+                            </Dialog.Description>
+                        )}
+                        {currentPickerOptions.items.length > 10 ? (
+                            <ScrollView style={{ maxHeight: 300 }}>
+                                {currentPickerOptions.items.map((item, index) => (
+                                    <Dialog.Button
+                                        key={index}
+                                        label={item.label}
+                                        onPress={() => this.handlePickerSelect(item)}
+                                        color={this.state['pref_' + currentPickerMenu.name] === item.id ? '#007aff' : '#007aff'}
+                                    />
+                                ))}
+                            </ScrollView>
+                        ) : (
+                            currentPickerOptions.items.map((item, index) => (
+                                <Dialog.Button
+                                    key={index}
+                                    label={item.label}
+                                    onPress={() => this.handlePickerSelect(item)}
+                                    color={this.state['pref_' + currentPickerMenu.name] === item.id ? '#007aff' : '#007aff'}
+                                />
+                            ))
+                        )}
+                        <Dialog.Button label="Cancel" onPress={this.handlePickerCancel} color="#999" />
+                    </Dialog.Container>
+                )}
+            </View>
         )
     }
 }
