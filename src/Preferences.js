@@ -22,6 +22,8 @@ export const PREF_TYPE = {
 };
 
 const styles = StyleSheet.create({
+    container: {
+    },
     sectionHeader: {
         backgroundColor: '#eee',
         fontSize: (Platform.OS === 'ios') ? 13 : 16,
@@ -70,6 +72,36 @@ const styles = StyleSheet.create({
     menuItemValueSwitch: {
         tintColor: '#e0e0e0',
     },
+    pickerContainer: {
+        padding: 0,
+    },
+    pickerTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        margin: 0,
+        borderBottomWidth: 1,
+        borderColor: '#aaa',
+    },
+    pickerDescription: {
+        color: '#aaa',
+    },
+    pickerButton: {
+        color: '#007aff',
+        paddingVertical: 20,
+    },
+    pickerButtonSelected: {
+        fontWeight: 900,
+        color: '#007aff',
+        paddingVertical: 20,
+    },
+    pickerCancelButton: {
+        color: '#999',
+        paddingVertical: 12,
+        borderTopWidth: 1,
+        borderColor: '#aaa',
+    }
 });
 
 export default class Preferences extends React.Component {
@@ -79,7 +111,7 @@ export default class Preferences extends React.Component {
         onPress: PropTypes.func,
         refreshControl: PropTypes.object,
         items: PropTypes.array,
-        containerStyle: PropTypes.object,
+        extraStyles: PropTypes.object,
         testID: PropTypes.string,
     };
 
@@ -89,7 +121,7 @@ export default class Preferences extends React.Component {
         onPress: null,
         refreshControl: null,
         items: [],
-        containerStyle: {},
+        extraStyles: {},
         testID: null,
     };
 
@@ -332,15 +364,22 @@ export default class Preferences extends React.Component {
 
     render() {
         const {
-            containerStyle, refreshControl, testID
+            extraStyles, refreshControl, testID
         } = this.props;
 
         const { currentPromptMenu, currentPromptOptions, currentPickerMenu, currentPickerOptions } = this.state;
 
+        const pickerContainerStyle = !!extraStyles.pickerContainer ? { ...styles.pickerContainer, ...extraStyles.pickerContainer } : styles.pickerContainer;
+        const pickerTitleStyle = !!extraStyles.pickerTitle ? { ...styles.pickerTitle, ...extraStyles.pickerTitle } : styles.pickerTitle;
+        const pickerDescriptionStyle = !!extraStyles.pickerDescription ? { ...styles.pickerDescription, ...extraStyles.pickerDescription } : styles.pickerDescription;
+        const pickerButtonStyle = !!extraStyles.pickerButton ? { ...styles.pickerButton, ...extraStyles.pickerButton } : styles.pickerButton;
+        const pickerButtonSelectedStyle = !!extraStyles.pickerButton ? { ...styles.pickerButtonSelected, ...extraStyles.pickerButton } : styles.pickerButtonSelected;
+        const pickerCancelButtonStyle = !!extraStyles.pickerCancelButton ? { ...styles.pickerCancelButton, ...extraStyles.pickerCancelButton } : styles.pickerCancelButton;
+
         return (
             <View style={{ flex: 1 }}>
                 <SectionList
-                    style={containerStyle}
+                    style={extraStyles.container ? { ...this.styles.container, ...extraStyles.container } : this.styles.container}
                     refreshControl={refreshControl}
                     renderSectionHeader={this.renderSectionHeader}
                     renderItem={this.renderItem}
@@ -377,39 +416,48 @@ export default class Preferences extends React.Component {
                 {/* Picker Dialog for Android */}
                 {Platform.OS === 'android' && currentPickerMenu && currentPickerOptions && (
                     <Dialog.Container
+                        contentStyle={pickerContainerStyle}
+                        headerStyle={pickerTitleStyle}
+                        footerStyle={pickerCancelButtonStyle}
                         visible={this.state.pickerDialogVisible}
                         onBackdropPress={this.handlePickerCancel}
                         onRequestClose={this.handlePickerCancel}
                         verticalButtons={true}
                     >
-                        <Dialog.Title>{currentPickerMenu.text}</Dialog.Title>
+                        <Dialog.Title>
+                            {currentPickerMenu.text}
+                        </Dialog.Title>
                         {currentPickerMenu.subtext && (
-                            <Dialog.Description>
+                            <Dialog.Description style={pickerDescriptionStyle}>
                                 {currentPickerMenu.subtext}
                             </Dialog.Description>
                         )}
-                        {currentPickerOptions.items.length > 10 ? (
-                            <ScrollView style={{ maxHeight: 300 }}>
+                        {currentPickerOptions.items.length > 7 ? (
+                            <ScrollView style={{ maxHeight: 445 }}>
                                 {currentPickerOptions.items.map((item, index) => (
                                     <Dialog.Button
+                                        style={this.state['pref_' + currentPickerMenu.name] === item.id ? styles.pickerButtonSelected : styles.pickerButton}
                                         key={index}
                                         label={item.label}
                                         onPress={() => this.handlePickerSelect(item)}
-                                        color={this.state['pref_' + currentPickerMenu.name] === item.id ? '#007aff' : '#007aff'}
+                                        color={this.state['pref_' + currentPickerMenu.name] === item.id ? styles.pickerButtonSelected.color : styles.pickerButton.color}
                                     />
                                 ))}
                             </ScrollView>
                         ) : (
-                            currentPickerOptions.items.map((item, index) => (
-                                <Dialog.Button
-                                    key={index}
-                                    label={item.label}
-                                    onPress={() => this.handlePickerSelect(item)}
-                                    color={this.state['pref_' + currentPickerMenu.name] === item.id ? '#007aff' : '#007aff'}
-                                />
-                            ))
+                            <View>
+                                {currentPickerOptions.items.map((item, index) => (
+                                    <Dialog.Button
+                                        style={this.state['pref_' + currentPickerMenu.name] === item.id ? pickerButtonSelectedStyle : pickerButtonStyle}
+                                        key={index}
+                                        label={item.label}
+                                        onPress={() => this.handlePickerSelect(item)}
+                                        color={this.state['pref_' + currentPickerMenu.name] === item.id ? pickerButtonSelectedStyle.color : pickerButtonStyle.color}
+                                    />
+                                ))}
+                            </View>
                         )}
-                        <Dialog.Button label="Cancel" onPress={this.handlePickerCancel} color="#999" />
+                        <Dialog.Button label="Cancel" onPress={this.handlePickerCancel} color={pickerCancelButtonStyle.color} />
                     </Dialog.Container>
                 )}
             </View>
