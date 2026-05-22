@@ -19,6 +19,7 @@ export const PREF_TYPE = {
     SWITCH: 2,
     PICKER: 3,
     LABEL: 4,
+    BUTTON: 5,
 };
 
 const styles = StyleSheet.create({
@@ -190,7 +191,8 @@ export default class Preferences extends React.Component {
                 dialogOptions.keyboardType || 'default'
             );
         } else if (Platform.OS === 'android') {
-            // Store menu and options in state for the dialog to access
+            // Initialize with current value so confirm works even without edits
+            this.promptInputValue = dialogOptions.defaultValue || '';
             this.setState({
                 currentPromptMenu: menu,
                 currentPromptOptions: dialogOptions,
@@ -238,7 +240,7 @@ export default class Preferences extends React.Component {
 
     handlePromptConfirm() {
         const { currentPromptMenu } = this.state;
-        if (currentPromptMenu && this.promptInputValue) {
+        if (currentPromptMenu && this.promptInputValue !== null && this.promptInputValue !== undefined) {
             this.onValueChange(currentPromptMenu, this.promptInputValue);
             this.promptInputValue = null;
             this.setState({ promptDialogVisible: false, currentPromptMenu: null, currentPromptOptions: null });
@@ -298,6 +300,11 @@ export default class Preferences extends React.Component {
                 break;
             case PREF_TYPE.LABEL:
                 break;
+            case PREF_TYPE.BUTTON:
+                if (this.props.onPress) {
+                    this.props.onPress(menu.name);
+                }
+                break;
             default:
                 break;
         }
@@ -320,13 +327,14 @@ export default class Preferences extends React.Component {
             case PREF_TYPE.SWITCH:
                 valueField = <Switch
                     style={[styles.menuItemValueSwitch, this.styles.menuItemValueSwitch]}
-                    trackColor={{ false: this.styles.menuItemValueSwitch.tintColor || this.styles.menuItemValueSwitch.tintColor }}
+                    trackColor={{ false: styles.menuItemValueSwitch.tintColor, true: this.styles.menuItemValueSwitch?.tintColor }}
                     disabled={!!item.disabled}
                     value={!!value}
                     onValueChange={(val) => this.onValueChange(item, val)}
                 />;
                 break;
             case PREF_TYPE.LABEL:
+            case PREF_TYPE.BUTTON:
             case PREF_TYPE.PICKER:
             case PREF_TYPE.TEXTINPUT:
                 if (item.type === PREF_TYPE.PICKER) {
@@ -341,23 +349,30 @@ export default class Preferences extends React.Component {
                 break;
         }
 
-        const activeOpacity = (!!item.disabled || (item.type === PREF_TYPE.SWITCH)) ? 1.0 : 0.5;
+        const isDisabled = !!item.disabled || (item.type === PREF_TYPE.SWITCH);
+        const isLabel = item.type === PREF_TYPE.LABEL;
+        const activeOpacity = isDisabled ? 1.0 : 0.5;
+
+        const content = (
+            <View style={[styles.menuItem, this.styles.menuItem]} key={item.index}>
+                <View style={[styles.menuItemField, this.styles.menuItemField]}>
+                    <Text style={[styles.menuItemText, this.styles.menuItemText]}>{item.text}</Text>
+                    {item.subtext ?
+                        <Text style={[styles.menuItemSubText, this.styles.menuItemSubText]}>{item.subtext}</Text>
+                        :
+                        null
+                    }
+                </View>
+                <View style={[styles.menuItemValue, this.styles.menuItemValue]}>
+                    {valueField}
+                </View>
+            </View>
+        );
 
         return (
+            isLabel ? content :
             <TouchableOpacity onPress={() => this.onMenuClick(item)} activeOpacity={activeOpacity} testID={testID}>
-                <View style={[styles.menuItem, this.styles.menuItem]} key={item.index}>
-                    <View style={[styles.menuItemField, this.styles.menuItemField]}>
-                        <Text style={[styles.menuItemText, this.styles.menuItemText]}>{item.text}</Text>
-                        {item.subtext ?
-                            <Text style={[styles.menuItemSubText, this.styles.menuItemSubText]}>{item.subtext}</Text>
-                            :
-                            null
-                        }
-                    </View>
-                    <View style={[styles.menuItemValue, this.styles.menuItemValue]}>
-                        {valueField}
-                    </View>
-                </View>
+                {content}
             </TouchableOpacity>
         )
     }
@@ -403,7 +418,7 @@ export default class Preferences extends React.Component {
                         )}
                         <Dialog.Input
                             label={currentPromptOptions.label || 'Value'}
-                            value={this.promptInputValue || currentPromptOptions.defaultValue || ''}
+                            defaultValue={currentPromptOptions.defaultValue || ''}
                             onChangeText={this.handlePromptInputChange}
                             keyboardType={currentPromptOptions.keyboardType || 'default'}
                             placeholder="Enter value"
